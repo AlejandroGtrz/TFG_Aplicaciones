@@ -105,7 +105,7 @@ def crear_cuestionario(current_user):
             db.session.add(respuesta_nueva)
             n=n+1
     db.session.commit()
-    return jsonify({'mensaje': 'Cuestionario creado'})
+    return jsonify({'mensaje': 'Cuestionario creado', 'id_cuestionario': cuestionario_nuevo.id})
 @app.route('/resolver/<cuestionario_id>', methods=['POST'])
 @token_required
 def iniciar_cuestionario(current_user, cuestionario_id):

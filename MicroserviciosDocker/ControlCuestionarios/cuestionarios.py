@@ -67,7 +67,7 @@ def crear_cuestionario():
             db.session.add(respuesta_nueva)
             n=n+1
     db.session.commit()
-    return jsonify({'mensaje': 'Cuestionario creado'})
+    return jsonify({'mensaje': 'Cuestionario creado', 'id_cuestionario': cuestionario_nuevo.id})
 
 @app.route('/cuestionario/<id_cuestionario>', methods=['DELETE'])
 def borrar_cuestionario( id_cuestionario):
