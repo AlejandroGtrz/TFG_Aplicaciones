@@ -1,0 +1,18 @@
+version: '3'
+services:
+ broker:
+  build: ./Redirecciona
+  ports:
+   - "5000:5000"
+ usuarios:
+  build: ./ControlUsuarios
+  ports:
+   - "5050:5050"
+ cuestionarios:
+  build: ./ControlCuestionarios
+  ports:
+   - "8080:8080"
+ operaciones:
+  build: ./AccionesCuestionarios
+  ports:
+   - "8000:8000"
