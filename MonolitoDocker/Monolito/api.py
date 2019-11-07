@@ -132,7 +132,7 @@ def obtener_resultados(current_user):
     lista=[]
     for u in usuario_cuestionarios:
         cuestionario=Cuestionario.query.filter(Cuestionario.id==u.id_usuario).first()
-        x={'titulo': cuestionario.titulo, 'preguntas': "" , 'puntuacion': ''}
+        x={'usuariocuestionario': u.id, 'titulo': cuestionario.titulo, 'preguntas': "" , 'puntuacion': ''}
         preguntas=Pregunta.query.filter(Pregunta.id_cuestionario==cuestionario.id).all()
         l=[]
         for p in preguntas:
@@ -215,4 +215,4 @@ def login():
 if __name__== "__main__":
     if not os.path.exists('db.sqlite'):
         db.create_all()
-    app.run()
+    app.run(host="0.0.0.0")

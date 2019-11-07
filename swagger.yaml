@@ -1,0 +1,328 @@
+swagger: "2.0"
+info:
+  description: "This is a simple questionary server."
+  version: "1.0.0"
+  title: "Questionator"
+host: "questionator"
+basePath: "/1_0"
+schemes:
+- "https"
+- "http"
+
+paths:
+  /login:
+    get:
+      summary: "Logearse en la aplicación"
+      consumes: 
+      - "application/json"
+      produces: 
+      - "application/json"
+      parameters: 
+      - in: "body"
+        name: "Usuario"
+        description: "Credenciales de acceso del usuario"
+        required: true
+        schema:
+          $ref: '#/definitions/Usuario'
+      responses:
+        405:
+          description: "Invalid input"
+        200:
+          description: "Exito"
+          schema:
+            $ref: '#/definitions/Token'
+        
+  /register:
+    post:
+      summary: "Registrar nuevo usuario en la aplicación"
+      consumes: 
+      - "application/json"
+      produces: 
+      - "application/json"
+      parameters: 
+      - in: "body"
+        name: "Credenciales"
+        description: "Datos de acceso del usuario nuevo"
+        required: true
+        schema:
+          $ref: '#/definitions/NuevoUsuario'
+      responses:
+        405:
+          description: "Invalid input"
+          schema:
+            example: {"Mensaje": "Usuario ya existe"}
+        200:
+          description: "Exito"
+          schema:
+            example: {"Mensaje":"usuario creado con exito"}
+  /cuestionarios:
+    get:
+       summary: "Obtiene una lista de todos los cuestionarios"
+       produces:
+       - "application/json"
+       responses:
+         200:
+           description: "Exito"
+           schema:
+             items:
+               $ref: '#/definitions/CuestionariosServ'
+  /resolver/{id_cuestionario}:
+    post:
+      summary: "Inicia el proceso de resolución de un cuestionario"
+      produces:
+      - "application/json"
+      parameters:
+      -  in: "path"
+         type: "integer"
+         name: "id_cuestionario"
+         description: "id del cuestionario que se desea resolver"
+         required: true
+      -  in: "header"
+         name: 'x-access-token'
+         required: true
+         type: "string"
+      responses:
+        200:
+          description: "Exito"
+          schema:
+            $ref: '#/definitions/UsuarioCuestionarioServ'
+    
+  
+  /cuestionario:
+    post:
+      summary: "Crea un nuevo cuestionario"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Objeto cuestionario que vamos a crear"
+        required: true
+        schema:
+          $ref: '#/definitions/Cuestionario'
+      - in: "header"
+        name: 'x-access-token'
+        required: true
+        type: "string"
+      responses:
+        405:
+          description: "Invalid input"
+        200:
+          description: "Exito"
+          schema:
+            $ref: '#/definitions/CuestionarioServ'
+  /cuestionario/{id_cuestionario}:
+    delete:
+      summary: "Borra un cuestionario"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "id_cuestionario"
+        type: "integer"
+        description: "id del cuestionario que queremos borrar"
+        required: true
+      - in: "header"
+        name: 'x-access-token'
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Exito"
+          schema:
+            example: {"Mensaje": "Cuestionario borrado con exito"}
+        405:
+          description: "Invalid input"
+    
+  /opcion:
+    post:
+      summary: "Responde a una pregunta de un cuestionario iniciado"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "respuesta"
+        description: "respuesta que vamos a dar"
+        required: true
+        schema:
+          $ref: '#/definitions/Respuesta'
+      - in: "header"
+        name: 'x-access-token'
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Exito"
+          schema:
+            example: {"Resultado" : "Correcta"}
+        405:
+          description: "Invalid input"
+  /cuestionario/resultados:
+    get:
+      summary: "Obten la puntuación de los cuestionarios que has completado"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "header"
+        name: 'x-access-token'
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Exito"
+          schema:
+            type: "array"
+            items:
+              $ref: '#/definitions/Resultado'
+        404:
+          description: "Recurso no encontrado"
+    
+        
+definitions:
+  Token:
+    type: "object"
+    properties:
+      token:
+        type: "string"
+  CuestionarioServ:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        example: "1"
+      mensaje:
+        type: "string"
+        example: "Cuestionario creado con exito"
+  Usuario:
+    type: "object"
+    properties:
+      Email:
+        type: "string"
+        example: "Alejandro@gmail.com"
+      Contraseña:
+        type: "string"
+        example: "123456789"
+  Cuestionario:
+    type: "object"
+    required: 
+    - "preguntas"
+    properties:
+      preguntas:
+        type: "array"
+        items:
+          $ref: "#/definitions/Pregunta"
+  NuevoUsuario:
+    type: "object"
+    properties:
+      Nombre:
+        type: "string"
+        example: "Alejandro"
+      Email:
+        type: "string"
+        example: "Alejandro@gmail.com"
+      Contraseña:
+        type: "string"
+        example: "123456789"
+  CuestionariosServ:
+    type: "object"
+    properties:
+      identificador:
+        type: "integer"
+        example: 1
+      titulo:
+        type: "string"
+        example: "cuestionarios sobre http"
+  UsuarioCuestionarioServ:
+    type: "object"
+    properties:
+      titulo:
+       type: "string"
+       example: "cuestionario sobre http"
+      preguntas:
+        type: "array"
+        items:
+          $ref: '#/definitions/PreguntaServ'
+      id_usuario_cuestionario:
+        type: "integer"
+        example: 1
+  PreguntaServ:
+    type: "object"
+    properties:
+      pregunta:
+        type: "string"
+        example: "Pregunta de ejemplo"
+      respuestas:
+        type: "array"
+        items:
+          type: "string"
+          example: "Respuesta1"
+  Respuesta:
+    type: "object"
+    properties:
+      texto_pregunta:
+        type: "string"
+        example: "De que color es el agua"
+      texto_opcion:
+        type: "string"
+        example: "Negro"
+      id_usuario_cuestionario:
+        type: "integer"
+        example: 1
+  Resultado:
+    type: "object"
+    properties:
+      usuariocuestionario:
+        type: "integer"
+        example: "1"
+      puntuacion:
+        type: "number"
+        example: "4"
+      titulo:
+        type: "string"
+        example: "Cuestionario sobre http"
+      preguntas:
+        type: "array"
+        items:
+          $ref: '#/definitions/preguntaContestada'
+          
+        
+  preguntaContestada:
+    type: "object"
+    properties:
+      pregunta:
+        type: "string"
+        example: "De que color es el agua"
+      opciones:
+        type: "array"
+        items:
+          type: "string"
+          example: ["Azul", "Verde" , "Transparente",  "Negra"]
+      respuesta:
+        type: "string"
+        example: "Transparente"
+      resultado:
+        type: "string"
+        example: "Correcta"
+  Pregunta:
+    type: "object"
+    properties:
+      pregunta:
+        type: "string"
+        example: "Pregunta de ejemplo"
+      respuestas:
+        type: "array"
+        items:
+          type: "string"
+          example: "Respuesta1"
+      tipo:
+        type: "string"
+        example: "Test"
+      respuesta:
+        type: "array"
+        items:
+          type: "integer"
+          example: 1, 0,-1,1
