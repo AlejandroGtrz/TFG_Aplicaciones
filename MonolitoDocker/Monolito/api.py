@@ -5,8 +5,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
 import uuid
+import config
 import os
+import smtplib, ssl
 from functools import wraps
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy dog'
@@ -20,6 +24,7 @@ class User(db.Model):
     nombre=db.Column(db.String(50))
     email=db.Column(db.String(50))
     contrasena=db.Column(db.String(50))
+    activado=db.Column(db.Boolean)
 class Cuestionario(db.Model):
     id=db.Column(db.Integer, primary_key=True)
     id_creador=db.Column(db.Integer)
@@ -70,6 +75,17 @@ def mostrar_cuestionarios():
     for i in cuestionarios:
         list.append({'Titulo': i.titulo, 'Identificador': i.id})
     return jsonify(list)
+@app.route('/verify/<token>')
+def verificar_usuario(token):
+    data=jwt.decode(token, app.config['SECRET_KEY'])
+    current_user=User.query.filter_by(public_id=data['public_id']).first()
+    if current_user.activado==1:
+        return jsonify({"Mensaje":"El usuario ya esta activado"})
+    current_user.activado=1
+    db.session.commit()
+    return jsonify({"Mensaje":"Usuario activado con exito"})
+
+
 @app.route('/register', methods=['POST'])
 def crear_usuario():
     data = request.get_json()
@@ -78,9 +94,24 @@ def crear_usuario():
     email=data['email']
     if User.query.filter_by(email = email).first() is not None:
         return jsonify({'mensaje': 'El usuario ya existe'})
-    usuario_nuevo= User(public_id=str(uuid.uuid4()), nombre=nombre, email=email, contrasena=hashed_password)
+    usuario_nuevo= User(public_id=str(uuid.uuid4()), nombre=nombre, email=email, contrasena=hashed_password, activado=0)
     db.session.add(usuario_nuevo)
     db.session.commit()
+    port = 465  # For SSL
+    smtp_server = "smtp.gmail.com"
+    sender_email = "alejandro.gutierrez.alv@gmail.com"  # Enter your address
+    receiver_email = email  # Enter receiver address
+    password = "Acman1000"
+    token=jwt.encode({'public_id': usuario_nuevo.public_id}, app.config['SECRET_KEY'], algorithm='HS256')
+    message="""\
+    Confirmar registro
+
+
+    Hola """+data['nombre']+""", por favor pulse en enlace que se encuentra a continuacion para completar el registro http://0.0.0.0:80/verify/""" + token.decode('UTF-8')
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, message)
     return jsonify({'mensaje': 'Usuario creado'})
 @app.route('/cuestionario', methods=['POST'])
 @token_required
@@ -207,6 +238,9 @@ def login():
     user= User.query.filter_by(email=email).first()
     if not user:
         return jsonify({"message": "Usuario no encontrado"})
+    if user.activado==0:
+        return jsonify({"Mensaje": "El usuario no esta activado, por favor revise su correo electronico"})
+    
     if check_password_hash(user.contrasena, contrasena):
         token=jwt.encode({'public_id': user.public_id,'exp': datetime.datetime.utcnow()+datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'], algorithm='HS256')
         return jsonify({'token': token.decode('UTF-8')})
