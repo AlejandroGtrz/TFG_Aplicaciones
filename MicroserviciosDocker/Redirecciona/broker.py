@@ -15,6 +15,11 @@ def mostrar_cuestionarios():
     url='http://cuestionarios:8080/cuestionarios'
     x= requests.get(url)
     return jsonify(x.json())
+@app.route('/verify/<token>')
+def verificar_usuario(token):
+    url='http://usuarios:5050/verify/'+token
+    x= requests.get(url)
+    return jsonify(x.json())
 @app.route('/register', methods=['POST'])
 def crear_usuario():
     data = request.get_json()

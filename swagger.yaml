@@ -161,6 +161,23 @@ paths:
             example: {"Resultado" : "Correcta"}
         405:
           description: "Invalid input"
+  /verify/{token}:
+    get:
+      summary: Activa el usuario
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: token
+        type: "string"
+        description: "token generado por el servidor para validar el usuario"
+        required: true
+      responses:
+        200:
+          description: "Exito"
+          schema:
+            example: {"Mensaje": "Usuario activado con exito"}
+    
   /cuestionario/resultados:
     get:
       summary: "Obten la puntuación de los cuestionarios que has completado"
