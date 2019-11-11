@@ -66,6 +66,51 @@ paths:
            schema:
              items:
                $ref: '#/definitions/CuestionariosServ'
+  /usuarios:
+    get:
+       summary: "Obtiene una lista de todos los usuarios"
+       produces:
+       - "application/json"
+       responses:
+         200:
+           description: "Exito"
+           schema:
+             items:
+               type: "string"
+               example: {"Nombre": "Alejandro123"}
+  /usuarios/by_name/{nombre}:
+    get:
+       summary: "Obtiene una lista de usuarios filtrados por el nombre"
+       produces:
+       - "application/json"
+       parameters:
+       - in: "path"
+         required: true
+         type: "string"
+         name: "nombre"
+       responses:
+         200:
+           description: "Exito"
+           schema:
+             items:
+               type: "string"
+               example: {"Nombre": "Alejandro123"}
+  /cuestionarios/by_tematica/{tematica}:
+    get:
+       summary: "Obtiene una lista de todos los cuestionarios filtrados por su tematica"
+       produces:
+       - "application/json"
+       parameters:
+       - in: 'path'
+         required: true
+         name: 'tematica'
+         type: 'string'
+       responses:
+         200:
+           description: "Exito"
+           schema:
+             items:
+               $ref: '#/definitions/CuestionariosServ'
   /resolver/{id_cuestionario}:
     post:
       summary: "Inicia el proceso de resolución de un cuestionario"
@@ -253,6 +298,12 @@ definitions:
       titulo:
         type: "string"
         example: "cuestionarios sobre http"
+      tematica:
+        type: "string"
+        example: "Tecnologias de la información"
+      descripcion:
+        type: "string"
+        example: "Pon a prueba tu conocimiento sobre las TI con este cuestionario de http"
   UsuarioCuestionarioServ:
     type: "object"
     properties:
