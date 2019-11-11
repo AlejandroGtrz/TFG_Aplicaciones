@@ -19,7 +19,7 @@ db=SQLAlchemy(app)
 class User(db.Model):
     id=db.Column(db.Integer, primary_key=True)
     public_id=db.Column(db.String(64), unique=True)
-    nombre=db.Column(db.String(50))
+    nombre=db.Column(db.String(50), unique=True)
     email=db.Column(db.String(50))
     contrasena = db.Column(db.String(64))
     activado= db.Column(db.Boolean)
@@ -47,7 +47,7 @@ def crear_usuario():
     hashed_password= generate_password_hash(data['contrasena'], method='sha256')
     nombre=data['nombre']
     email=data['email']
-    if User.query.filter_by(email = email).first() is not None:
+    if User.query.filter_by(email = email).first() or User.query.filter_by(nombre = nombre).first() is not None:
         return jsonify({'Mensaje': 'El usuario ya existe'})
     usuario_nuevo= User(public_id=str(uuid.uuid4()), nombre=nombre, email=email, contrasena=hashed_password)
     db.session.add(usuario_nuevo)

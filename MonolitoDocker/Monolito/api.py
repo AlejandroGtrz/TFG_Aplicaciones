@@ -5,7 +5,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
 import uuid
-import config
 import os
 import smtplib, ssl
 from functools import wraps
@@ -21,7 +20,7 @@ db=SQLAlchemy(app)
 class User(db.Model):
     id=db.Column(db.Integer, primary_key=True)
     public_id=db.Column(db.String(50),unique=True)
-    nombre=db.Column(db.String(50))
+    nombre=db.Column(db.String(50), unique=True)
     email=db.Column(db.String(50))
     contrasena=db.Column(db.String(50))
     activado=db.Column(db.Boolean)
@@ -29,6 +28,8 @@ class Cuestionario(db.Model):
     id=db.Column(db.Integer, primary_key=True)
     id_creador=db.Column(db.Integer)
     titulo=db.Column(db.String(100))
+    tematica=db.Column(db.String(50))
+    descripcion=db.Column(db.Text())
 class CuestionarioUsuario(db.Model):
     id=db.Column(db.Integer, primary_key=True)
     id_usuario=db.Column(db.Integer)
@@ -68,12 +69,43 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     return decorated
 
+
+@app.route('/usuarios', methods=['GET'])
+@token_required
+def usuarios(current_user):
+    usuarios=User.query
+    list=[]
+    for u in usuarios:
+        list.append({'Nombre': u.nombre})
+    return jsonify(list)
+@app.route('/usuarios/by_name/<nombre>', methods=['GET'])
+@token_required
+def usuarios_by_name(current_user, nombre):
+    usuarios=User.query.filter(User.nombre.contains(nombre))
+    list=[]
+    for u in usuarios:
+        list.append({'Nombre': u.nombre})
+    return jsonify(list)
 @app.route('/cuestionarios', methods=['GET'])
 def mostrar_cuestionarios():
     cuestionarios=Cuestionario.query
     list=[]
     for i in cuestionarios:
-        list.append({'Titulo': i.titulo, 'Identificador': i.id})
+        list.append({'Titulo': i.titulo, 'Identificador': i.id, 'Tematica': i.tematica, 'Descripcion': i.descripcion})
+    return jsonify(list)
+@app.route('/cuestionarios/by_tematica/<tematica>', methods=['GET'])
+def mostrar_cuestionarios_tematica(tematica):
+    cuestionarios=Cuestionario.query.filter(Cuestionario.tematica.contains(tematica))
+    list=[]
+    for i in cuestionarios:
+        list.append({'Titulo': i.titulo, 'Identificador': i.id, 'Tematica': i.tematica, 'Descripcion': i.descripcion})
+    return jsonify(list)
+@app.route('/cuestionarios/by_descripcion/<descripcion>', methods=['GET'])
+def mostrar_cuestionarios_descripcion(descripcion):
+    cuestionarios=Cuestionario.query.filter(Cuestionario.tematica.contains(descripcion))
+    list=[]
+    for i in cuestionarios:
+        list.append({'Titulo': i.titulo, 'Identificador': i.id, 'Tematica': i.tematica, 'Descripcion': i.descripcion})
     return jsonify(list)
 @app.route('/verify/<token>')
 def verificar_usuario(token):
@@ -92,11 +124,9 @@ def crear_usuario():
     hashed_password= generate_password_hash(data['contrasena'], method='sha256')
     nombre=data['nombre']
     email=data['email']
-    if User.query.filter_by(email = email).first() is not None:
+    if User.query.filter_by(email = email).first() or User.query.filter_by(nombre = nombre).first()  is not None:
         return jsonify({'mensaje': 'El usuario ya existe'})
     usuario_nuevo= User(public_id=str(uuid.uuid4()), nombre=nombre, email=email, contrasena=hashed_password, activado=0)
-    db.session.add(usuario_nuevo)
-    db.session.commit()
     port = 465  # For SSL
     smtp_server = "smtp.gmail.com"
     sender_email = "alejandro.gutierrez.alv@gmail.com"  # Enter your address
@@ -112,13 +142,17 @@ def crear_usuario():
     with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
         server.login(sender_email, password)
         server.sendmail(sender_email, receiver_email, message)
-    return jsonify({'mensaje': 'Usuario creado'})
+    db.session.add(usuario_nuevo)
+    db.session.commit()
+    return jsonify({'mensaje': 'Usuario creado, revise su correo para completar el registro'})
 @app.route('/cuestionario', methods=['POST'])
 @token_required
 def crear_cuestionario(current_user):
     data=request.get_json()
     titulo=data['titulo']
-    cuestionario_nuevo=Cuestionario(id_creador=current_user.id,titulo=titulo)
+    tematica=data['tematica']
+    descripcion=data['descripcion']
+    cuestionario_nuevo=Cuestionario(id_creador=current_user.id,titulo=titulo, tematica=tematica, descripcion=descripcion)
     db.session.add(cuestionario_nuevo)
     db.session.flush()
     preguntas=data['preguntas']

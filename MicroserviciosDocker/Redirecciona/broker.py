@@ -15,6 +15,26 @@ def mostrar_cuestionarios():
     url='http://cuestionarios:8080/cuestionarios'
     x= requests.get(url)
     return jsonify(x.json())
+@app.route('/cuestionarios/by_tematica/<tematica>', methods=['GET'])
+def mostrar_cuestionarios_tematica(tematica):
+    url='http://cuestionarios:8080/cuestionarios/by_tematica/'+tematica
+    x= requests.get(url)
+    return jsonify(x.json())
+@app.route('/cuestionarios/by_descripcion/<descripcion>', methods=['GET'])
+def mostrar_cuestionarios_descripcion(descripcion):
+    url='http://cuestionarios:8080/cuestionarios/by_descripcion/'+descripcion
+    x= requests.get(url)
+    return jsonify(x.json())
+@app.route('/usuarios', methods=['GET'])
+def usuarios():
+    url='http://usuarios:5050/usuarios'
+    x= requests.get(url, headers= {'x-access-token': request.headers['x-access-token']})
+    return jsonify(x.json())
+@app.route('/usuarios/by_name/<nombre>', methods=['GET'])
+def usuarios_by_name(nombre):
+    url='http://usuarios:5050/usuarios/by_name/'+nombre
+    x= requests.get(url, headers= {'x-access-token': request.headers['x-access-token']})
+    return jsonify(x.json())
 @app.route('/verify/<token>')
 def verificar_usuario(token):
     url='http://usuarios:5050/verify/'+token

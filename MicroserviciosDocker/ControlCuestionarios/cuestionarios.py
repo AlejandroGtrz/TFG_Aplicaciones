@@ -19,6 +19,8 @@ class Cuestionario(db.Model):
     id=db.Column(db.Integer, primary_key=True)
     id_creador=db.Column(db.Integer)
     titulo=db.Column(db.String(100))
+    tematica=db.Column(db.String(50))
+    descripcion=db.Column(db.Text())
 class Pregunta(db.Model):
     id=db.Column(db.Integer, primary_key=True)
     id_cuestionario=db.Column(db.Integer, db.ForeignKey('cuestionario.id'))
@@ -37,9 +39,22 @@ def mostrar_cuestionarios():
     cuestionarios=Cuestionario.query
     list=[]
     for i in cuestionarios:
-        list.append({'Titulo': i.titulo, 'Identificador': i.id})
+        list.append({'Titulo': i.titulo, 'Identificador': i.id, 'Tematica': i.tematica, 'Descripcion': i.descripcion})
     return jsonify(list)
-
+@app.route('/cuestionarios/by_tematica/<tematica>', methods=['GET'])
+def mostrar_cuestionarios_tematica(tematica):
+    cuestionarios=Cuestionario.query.filter(Cuestionario.tematica.contains(tematica))
+    list=[]
+    for i in cuestionarios:
+        list.append({'Titulo': i.titulo, 'Identificador': i.id, 'Tematica': i.tematica, 'Descripcion': i.descripcion})
+    return jsonify(list)
+@app.route('/cuestionarios/by_descripcion/<descripcion>', methods=['GET'])
+def mostrar_cuestionarios_descripcion(descripcion):
+    cuestionarios=Cuestionario.query.filter(Cuestionario.tematica.contains(descripcion))
+    list=[]
+    for i in cuestionarios:
+        list.append({'Titulo': i.titulo, 'Identificador': i.id, 'Tematica': i.tematica, 'Descripcion': i.descripcion})
+    return jsonify(list)
 @app.route('/cuestionario', methods=['POST'])
 def crear_cuestionario():
     data=request.get_json()
@@ -49,7 +64,9 @@ def crear_cuestionario():
         return jsonify(x.json())
     id_usuario= x.json()['id']
     titulo=data['titulo']
-    cuestionario_nuevo=Cuestionario(id_creador=id_usuario,titulo=titulo)
+    tematica=data['tematica']
+    descripcion=data['descripcion']
+    cuestionario_nuevo=Cuestionario(id_creador=id_usuario, titulo=titulo, tematica=tematica, descripcion=descripcion)
     db.session.add(cuestionario_nuevo)
     db.session.flush()
     preguntas=data['preguntas']

@@ -50,8 +50,6 @@ def crear_usuario():
     if User.query.filter_by(email = email).first() is not None:
         return jsonify({'Mensaje': 'El usuario ya existe'})
     usuario_nuevo= User(public_id=str(uuid.uuid4()), nombre=nombre, email=email, contrasena=hashed_password)
-    db.session.add(usuario_nuevo)
-    db.session.commit()
     port = 465  # For SSL
     smtp_server = "smtp.gmail.com"
     sender_email = "alejandro.gutierrez.alv@gmail.com"  # Enter your address
@@ -67,6 +65,8 @@ def crear_usuario():
     with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
         server.login(sender_email, password)
         server.sendmail(sender_email, receiver_email, message)
+    db.session.add(usuario_nuevo)
+    db.session.commit()
     return jsonify({'mensaje': 'Usuario creado, revise su correo para completar el registro'})
 
 
@@ -84,7 +84,28 @@ def login():
         token=jwt.encode({'public_id': user.public_id,'exp': datetime.datetime.utcnow()+datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'], algorithm='HS256')
         return jsonify({'token': token.decode('UTF-8')})
     return jsonify({'Mensaje': "Error"})
-    
+
+@app.route('/usuarios', methods=['GET'])
+@token_required
+def usuarios(current_user):
+    usuarios=User.query
+    list=[]
+    for u in usuarios:
+        list.append({'Nombre': u.nombre})
+    return jsonify(list)
+@app.route('/usuarios/by_name/<nombre>', methods=['GET'])
+@token_required
+def usuarios_by_name(current_user, nombre):
+    usuarios=User.query.filter(User.nombre.contains(nombre))
+    list=[]
+    for u in usuarios:
+        list.append({'Nombre': u.nombre})
+    return jsonify(list)
+
+@app.route('/verify')
+@token_required
+def verificar(current_user):
+    return jsonify({'id': current_user.id})
 @app.route('/verify/<token>')
 def verificar_usuario(token):
     data=jwt.decode(token, app.config['SECRET_KEY'])
